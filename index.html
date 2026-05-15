@@ -4,60 +4,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Instagram</title>
+
+<title>Neo Social</title>
 
 <style>
+
+/* H O U D I N I  S T Y L E */
+
 body{
     margin:0;
-    background:#0f0f0f;
-    color:white;
+    background:#050505;
+    color:#fff;
     font-family:Arial;
+}
+
+.glass{
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
+    border-radius:16px;
+    padding:15px;
+    margin:10px;
 }
 
 .container{
     width:500px;
     margin:auto;
-    padding-top:30px;
-}
-
-.card{
-    background:#1c1c1c;
-    padding:15px;
-    border-radius:15px;
-    margin-bottom:15px;
+    padding-top:20px;
 }
 
 input, textarea{
+
     width:100%;
     padding:10px;
     margin-top:8px;
+
     border:none;
-    border-radius:8px;
-    background:#2a2a2a;
+    border-radius:10px;
+
+    background:#111;
     color:white;
-    box-sizing:border-box;
 }
 
 button{
+
     width:100%;
-    margin-top:10px;
     padding:10px;
+    margin-top:10px;
+
     border:none;
-    border-radius:8px;
-    background:#4b7cff;
+    border-radius:10px;
+
+    background:#6c5ce7;
     color:white;
-    cursor:pointer;
 }
 
-.post{
-    padding:10px;
-    background:#222;
-    border-radius:10px;
+.post img{
+    width:100%;
+    border-radius:12px;
     margin-top:10px;
 }
 
 #app{display:none;}
-.small{font-size:12px;color:#aaa;}
+
 </style>
 </head>
 
@@ -66,9 +75,9 @@ button{
 <div class="container">
 
 <!-- AUTH -->
-<div class="card" id="auth">
+<div class="glass" id="auth">
 
-<h2>Mini Instagram</h2>
+<h2>NEO SOCIAL</h2>
 
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -81,14 +90,15 @@ button{
 <!-- APP -->
 <div id="app">
 
-<div class="card">
+<div class="glass">
 
 <h3 id="userEmail"></h3>
 
-<textarea id="postText" placeholder="Write something..."></textarea>
-<button onclick="createPost()">Post</button>
+<input type="file" id="imageInput">
 
-<button onclick="logout()">Logout</button>
+<textarea id="text" placeholder="Write post..."></textarea>
+
+<button onclick="createPost()">Post</button>
 
 </div>
 
@@ -107,62 +117,65 @@ const supabase = createClient(
 
 'https://opqngkyrgazoggzscdqv.supabase.co',
 
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcW5na3lyZ2F6b2dnenNjZHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTE2NjUsImV4cCI6MjA5NDQyNzY2NX0.ujjzvuhq1MxpDDLo8g5skjfa_vNunGU5d4EY402x7Fc'
+'PASTE_ANON_KEY_HERE'
 
 )
 
-let currentUser = null
+let userEmail = null
 
 // REGISTER
 window.register = async () => {
 
-const email = document.getElementById("email").value
-const password = document.getElementById("password").value
+const email = emailInput().email
+const password = emailInput().password
 
 const { error } = await supabase.auth.signUp({
-email,
-password
+email, password
 })
 
-if(error) return alert(error.message)
-
-alert("Registered! Now login")
+alert(error ? error.message : "Registered")
 }
 
 // LOGIN
 window.login = async () => {
 
-const email = document.getElementById("email").value
-const password = document.getElementById("password").value
+const email = emailInput().email
+const password = emailInput().password
 
 const { data, error } =
 await supabase.auth.signInWithPassword({ email, password })
 
 if(error) return alert(error.message)
 
-currentUser = data.user.email
+userEmail = data.user.email
 showApp()
 loadPosts()
 }
 
-// LOGOUT
-window.logout = async () => {
-await supabase.auth.signOut()
-location.reload()
-}
-
-// CREATE POST
+// CREATE POST WITH IMAGE
 window.createPost = async () => {
 
-const text = document.getElementById("postText").value
-if(!text) return
+const file = document.getElementById("imageInput").files[0]
+const text = document.getElementById("text").value
+
+if(!file) return alert("Add image")
+
+const fileName = Date.now()+file.name
+
+await supabase.storage
+.from("images")
+.upload(fileName, file)
+
+const { data } = supabase.storage
+.from("images")
+.getPublicUrl(fileName)
 
 await supabase.from("posts").insert({
+user_email: userEmail,
 content: text,
-user_email: currentUser
+image_url: data.publicUrl
 })
 
-document.getElementById("postText").value = ""
 loadPosts()
 }
 
@@ -176,17 +189,15 @@ const { data } = await supabase
 
 document.getElementById("posts").innerHTML = ""
 
-data.forEach(post => {
+data.forEach(p => {
 
 const div = document.createElement("div")
-div.className = "post"
+div.className = "glass post"
 
 div.innerHTML = `
-<b>${post.user_email}</b>
-<p>${post.content}</p>
-
-<button onclick="likePost('${post.id}')">❤️ Like</button>
-<button onclick="commentPost('${post.id}')">💬 Comment</button>
+<b>${p.user_email}</b>
+<p>${p.content}</p>
+<img src="${p.image_url}">
 `
 
 document.getElementById("posts").appendChild(div)
@@ -194,51 +205,31 @@ document.getElementById("posts").appendChild(div)
 
 }
 
-// LIKE
-window.likePost = async (id) => {
-await supabase.from("likes").insert({
-post_id: id,
-user_email: currentUser
-})
-
-alert("Liked!")
-}
-
-// COMMENT
-window.commentPost = async (id) => {
-
-const text = prompt("Write comment:")
-if(!text) return
-
-await supabase.from("comments").insert({
-post_id: id,
-user_email: currentUser,
-content: text
-})
-
-alert("Comment added!")
-}
-
 // SHOW APP
 function showApp(){
 document.getElementById("auth").style.display="none"
 document.getElementById("app").style.display="block"
-document.getElementById("userEmail").innerText=currentUser
+document.getElementById("userEmail").innerText=userEmail
 }
 
-// CHECK SESSION
-async function checkUser(){
-
+// SESSION
+async function check(){
 const { data } = await supabase.auth.getUser()
 
 if(data.user){
-currentUser = data.user.email
+userEmail = data.user.email
 showApp()
 loadPosts()
 }
 }
+check()
 
-checkUser()
+function emailInput(){
+return {
+email: document.getElementById("email").value,
+password: document.getElementById("password").value
+}
+}
 
 </script>
 
