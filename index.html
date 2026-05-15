@@ -13,40 +13,29 @@ content="width=device-width, initial-scale=1.0">
 <style>
 
 body{
-
     margin:0;
-    background:#0f0f0f;
+    background:#111;
     color:white;
     font-family:Arial;
-
 }
 
 .container{
-
     width:500px;
     margin:auto;
     padding-top:50px;
-
 }
 
 .card{
-
     background:#1c1c1c;
-
     padding:20px;
-
     border-radius:20px;
-
     margin-bottom:20px;
-
 }
 
 input, textarea{
 
     width:100%;
-
     padding:12px;
-
     margin-top:10px;
 
     border:none;
@@ -60,12 +49,11 @@ input, textarea{
     font-size:16px;
 
     box-sizing:border-box;
-
 }
 
 textarea{
 
-    min-height:100px;
+    min-height:120px;
 
 }
 
@@ -75,7 +63,7 @@ button{
 
     padding:12px;
 
-    margin-top:15px;
+    margin-top:10px;
 
     border:none;
 
@@ -88,7 +76,6 @@ button{
     font-size:16px;
 
     cursor:pointer;
-
 }
 
 .post{
@@ -99,14 +86,11 @@ button{
 
     border-radius:15px;
 
-    margin-top:15px;
-
+    margin-top:10px;
 }
 
 #app{
-
     display:none;
-
 }
 
 </style>
@@ -170,12 +154,11 @@ Publish
 
 </div>
 
-<div
-class="card"
-id="posts"
->
+<div class="card">
 
 <h2>Posts</h2>
+
+<div id="posts"></div>
 
 </div>
 
@@ -193,7 +176,7 @@ const supabaseUrl =
 'https://opqngkyrgazoggzscdqv.supabase.co'
 
 const supabaseKey =
-'ТВОЙ_ANON_KEY'
+'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV'
 
 const supabase =
 createClient(
@@ -223,7 +206,7 @@ window.register = async function(){
 
     }else{
 
-        alert('Account created')
+        alert('Registration successful')
 
     }
 
@@ -297,7 +280,7 @@ window.createPost = function(){
     div.innerText = text
 
     document.getElementById('posts')
-    .appendChild(div)
+    .prepend(div)
 
     document.getElementById('postInput').value = ''
 
