@@ -4,10 +4,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Instagram FIX</title>
+<title>Mini Social</title>
 
 <style>
-
 body{
     margin:0;
     background:#0f0f0f;
@@ -54,16 +53,35 @@ button{
     padding:10px;
     border-radius:10px;
     margin-top:10px;
+    display:flex;
+    gap:10px;
 }
 
-.post img{
-    width:100%;
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#4b7cff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+}
+
+.chatBox{
+    height:200px;
+    overflow:auto;
+    background:#111;
+    padding:10px;
     border-radius:10px;
-    margin-top:10px;
+}
+
+.msg{
+    margin-bottom:8px;
+    font-size:14px;
 }
 
 #app{display:none;}
-
 </style>
 </head>
 
@@ -71,9 +89,10 @@ button{
 
 <div class="container">
 
+<!-- AUTH -->
 <div class="card" id="auth">
 
-<h2>Mini Instagram</h2>
+<h2>Mini Social</h2>
 
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -83,18 +102,21 @@ button{
 
 </div>
 
+<!-- APP -->
 <div id="app">
 
 <div class="card">
-
 <h3 id="userEmail"></h3>
 
-<input type="file" id="image">
 <textarea id="text" placeholder="Write post..."></textarea>
-
 <button onclick="createPost()">Post</button>
-<button onclick="logout()">Logout</button>
+</div>
 
+<div class="card">
+<h3>💬 Chat</h3>
+<div class="chatBox" id="chat"></div>
+<input id="chatInput" placeholder="Message...">
+<button onclick="sendMessage()">Send</button>
 </div>
 
 <div id="posts"></div>
@@ -114,99 +136,68 @@ const supabase = createClient(
 
 let currentUser = null
 
+// AVATAR
+function avatar(email){
+return email ? email[0].toUpperCase() : "?"
+}
+
 // REGISTER
 window.register = async () => {
-const email = emailInput().email
-const password = emailInput().password
-
-const { error } = await supabase.auth.signUp({ email, password })
-
+const { error } = await supabase.auth.signUp({
+email: emailInput().email,
+password: emailInput().password
+})
 if(error) return alert(error.message)
-
 alert("Registered")
 }
 
 // LOGIN
 window.login = async () => {
-const email = emailInput().email
-const password = emailInput().password
-
-const { data, error } =
-await supabase.auth.signInWithPassword({ email, password })
+const { data, error } = await supabase.auth.signInWithPassword({
+email: emailInput().email,
+password: emailInput().password
+})
 
 if(error) return alert(error.message)
 
 currentUser = data.user.email
 showApp()
 loadPosts()
+loadChat()
 }
 
-// LOGOUT
-window.logout = async () => {
-await supabase.auth.signOut()
-location.reload()
-}
-
-// CREATE POST (FIXED)
+// CREATE POST
 window.createPost = async () => {
 
-try{
-
-const file = document.getElementById("image").files[0]
 const text = document.getElementById("text").value
 
-if(!file) return alert("Select image")
-
-const fileName = Date.now() + "_" + file.name
-
-// UPLOAD IMAGE
-const { error: uploadError } = await supabase.storage
-.from("images")
-.upload(fileName, file)
-
-if(uploadError){
-alert("Upload error: " + uploadError.message)
-return
-}
-
-// GET PUBLIC URL
-const { data: urlData } = supabase.storage
-.from("images")
-.getPublicUrl(fileName)
-
-// INSERT POST
-const { error } = await supabase.from("posts").insert({
+await supabase.from("posts").insert({
 user_email: currentUser,
-content: text,
-image_url: urlData.publicUrl
+content: text
 })
-
-if(error){
-alert("DB error: " + error.message)
-return
-}
 
 document.getElementById("text").value = ""
 loadPosts()
-
-}catch(e){
-alert("Fatal error: " + e.message)
 }
 
+// LIKE POST
+window.likePost = async (id) => {
+
+await supabase.from("likes").insert({
+post_id: id,
+user_email: currentUser
+})
+
+alert("Liked ❤️")
 }
 
-// LOAD POSTS (FIXED)
+// LOAD POSTS
 async function loadPosts(){
 
-const { data, error } = await supabase
+const { data } = await supabase
 .from("posts")
 .select("*")
 .order("created_at",{ascending:false})
-
-if(error){
-alert("Load error: " + error.message)
-return
-}
 
 document.getElementById("posts").innerHTML = ""
 
@@ -216,15 +207,53 @@ const div = document.createElement("div")
 div.className = "post"
 
 div.innerHTML = `
-<b>${post.user_email || ""}</b>
-<p>${post.content || ""}</p>
-<img src="${post.image_url || ""}">
+<div class="avatar">${avatar(post.user_email)}</div>
+<div>
+<b>${post.user_email}</b>
+<p>${post.content}</p>
+<button onclick="likePost('${post.id}')">❤️ Like</button>
+</div>
 `
 
 document.getElementById("posts").appendChild(div)
 
 })
 
+}
+
+// CHAT
+window.sendMessage = async () => {
+
+const msg = document.getElementById("chatInput").value
+
+await supabase.from("messages").insert({
+user_email: currentUser,
+message: msg
+})
+
+document.getElementById("chatInput").value = ""
+loadChat()
+}
+
+async function loadChat(){
+
+const { data } = await supabase
+.from("messages")
+.select("*")
+.order("created_at",{ascending:true})
+
+const chat = document.getElementById("chat")
+chat.innerHTML = ""
+
+data.forEach(m => {
+chat.innerHTML += `
+<div class="msg">
+<b>${m.user_email}</b>: ${m.message}
+</div>
+`
+})
+
+chat.scrollTop = chat.scrollHeight
 }
 
 // SHOW APP
@@ -234,7 +263,7 @@ document.getElementById("app").style.display="block"
 document.getElementById("userEmail").innerText=currentUser
 }
 
-// INPUT FIX
+// AUTH INPUT
 function emailInput(){
 return {
 email: document.getElementById("email").value,
@@ -242,7 +271,7 @@ password: document.getElementById("password").value
 }
 }
 
-// CHECK USER
+// CHECK SESSION
 async function checkUser(){
 const { data } = await supabase.auth.getUser()
 
@@ -250,6 +279,7 @@ if(data.user){
 currentUser = data.user.email
 showApp()
 loadPosts()
+loadChat()
 }
 }
 
