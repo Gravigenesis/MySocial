@@ -4,55 +4,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Social</title>
+
+<title>Mini Instagram</title>
 
 <style>
+
 body{
     margin:0;
-    background:#111;
+    background:#0f0f0f;
     color:white;
     font-family:Arial;
 }
 
-.card{
-    width:320px;
-    margin:100px auto;
-    padding:20px;
-    background:#1c1c1c;
-    border-radius:15px;
+.container{
+    width:520px;
+    margin:auto;
+    padding-top:20px;
 }
 
-input, button{
+.card{
+    background:#1c1c1c;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+}
+
+input, textarea{
     width:100%;
     padding:10px;
-    margin-top:10px;
+    margin-top:8px;
     border:none;
     border-radius:8px;
-}
-
-input{
     background:#2a2a2a;
     color:white;
 }
 
 button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
     background:#4b7cff;
     color:white;
     cursor:pointer;
 }
 
-#app{
-    display:none;
-    text-align:center;
+.post{
+    background:#222;
+    padding:10px;
+    border-radius:10px;
+    margin-top:10px;
 }
+
+.post img{
+    width:100%;
+    border-radius:10px;
+    margin-top:10px;
+}
+
+.small{
+    font-size:12px;
+    color:#aaa;
+}
+
+#app{display:none;}
+
 </style>
 </head>
 
 <body>
 
+<div class="container">
+
+<!-- AUTH -->
 <div class="card" id="auth">
 
-<h2>Login / Register</h2>
+<h2>Mini Instagram</h2>
 
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -62,62 +90,183 @@ button{
 
 </div>
 
+<!-- APP -->
 <div id="app">
-<h2>Ты вошёл</h2>
-<p id="user"></p>
+
+<div class="card">
+
+<h3 id="userEmail"></h3>
+
+<input type="file" id="image">
+
+<textarea id="text" placeholder="Write post..."></textarea>
+
+<button onclick="createPost()">Post</button>
+
 <button onclick="logout()">Logout</button>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="posts"></div>
 
-<script>
+</div>
 
-const supabase = supabase.createClient(
-  'https://opqngkyrgazoggzscdqv.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcW5na3lyZ2F6b2dnenNjZHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTE2NjUsImV4cCI6MjA5NDQyNzY2NX0.ujjzvuhq1MxpDDLo8g5skjfa_vNunGU5d4EY402x7Fc'
+</div>
+
+<script type="module">
+
+import { createClient }
+from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const supabase = createClient(
+
+'https://opqngkyrgazoggzscdqv.supabase.co',
+
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcW5na3lyZ2F6b2dnenNjZHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTE2NjUsImV4cCI6MjA5NDQyNzY2NX0.ujjzvuhq1MxpDDLo8g5skjfa_vNunGU5d4EY402x7Fc'
+
 )
 
-async function register(){
+let currentUser = null
 
-  const email = document.getElementById('email').value
-  const password = document.getElementById('password').value
+// REGISTER
+window.register = async () => {
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password
-  })
+const email = document.getElementById("email").value
+const password = document.getElementById("password").value
 
-  if(error){
-    alert(error.message)
-  } else {
-    alert('Регистрация успешна')
-  }
+const { error } = await supabase.auth.signUp({
+email,
+password
+})
+
+if(error) return alert(error.message)
+
+alert("Registered")
 }
 
-async function login(){
+// LOGIN
+window.login = async () => {
 
-  const email = document.getElementById('email').value
-  const password = document.getElementById('password').value
+const email = document.getElementById("email").value
+const password = document.getElementById("password").value
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  })
+const { data, error } =
+await supabase.auth.signInWithPassword({ email, password })
 
-  if(error){
-    alert(error.message)
-    return
-  }
+if(error) return alert(error.message)
 
-  document.getElementById('auth').style.display = 'none'
-  document.getElementById('app').style.display = 'block'
-  document.getElementById('user').innerText = data.user.email
+currentUser = data.user.email
+showApp()
+loadPosts()
 }
 
-async function logout(){
-  await supabase.auth.signOut()
-  location.reload()
+// LOGOUT
+window.logout = async () => {
+await supabase.auth.signOut()
+location.reload()
 }
+
+// CREATE POST + IMAGE
+window.createPost = async () => {
+
+const file = document.getElementById("image").files[0]
+const text = document.getElementById("text").value
+
+if(!file) return alert("Select image")
+
+const fileName = Date.now() + file.name
+
+await supabase.storage
+.from("images")
+.upload(fileName, file)
+
+const { data } = supabase.storage
+.from("images")
+.getPublicUrl(fileName)
+
+await supabase.from("posts").insert({
+user_email: currentUser,
+content: text,
+image_url: data.publicUrl
+})
+
+document.getElementById("text").value = ""
+loadPosts()
+}
+
+// LOAD POSTS
+async function loadPosts(){
+
+const { data } = await supabase
+.from("posts")
+.select("*")
+.order("created_at",{ascending:false})
+
+document.getElementById("posts").innerHTML = ""
+
+data.forEach(post => {
+
+const div = document.createElement("div")
+div.className = "post"
+
+div.innerHTML = `
+<b>${post.user_email}</b>
+<p>${post.content}</p>
+<img src="${post.image_url}">
+
+<button onclick="likePost('${post.id}')">❤️ Like</button>
+<button onclick="commentPost('${post.id}')">💬 Comment</button>
+`
+
+document.getElementById("posts").appendChild(div)
+})
+
+}
+
+// LIKE
+window.likePost = async (id) => {
+await supabase.from("likes").insert({
+post_id: id,
+user_email: currentUser
+})
+alert("Liked")
+}
+
+// COMMENT
+window.commentPost = async (id) => {
+
+const text = prompt("Write comment:")
+if(!text) return
+
+await supabase.from("comments").insert({
+post_id: id,
+user_email: currentUser,
+content: text
+})
+
+alert("Comment added")
+}
+
+// SHOW APP
+function showApp(){
+document.getElementById("auth").style.display="none"
+document.getElementById("app").style.display="block"
+document.getElementById("userEmail").innerText=currentUser
+}
+
+// CHECK USER
+async function checkUser(){
+
+const { data } = await supabase.auth.getUser()
+
+if(data.user){
+currentUser = data.user.email
+showApp()
+loadPosts()
+}
+}
+
+checkUser()
 
 </script>
 
