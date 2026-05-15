@@ -1,251 +1,285 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gravigenesis Social</title>
 
-    <style>
+<meta charset="UTF-8">
 
-        body{
-            margin:0;
-            background:#0f0f0f;
-            color:white;
-            font-family:Arial;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-        }
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-        .card{
-            width:350px;
-            background:#1b1b1b;
-            padding:30px;
-            border-radius:20px;
-            box-shadow:0 0 30px rgba(0,0,0,0.5);
-            text-align:center;
-        }
+<title>Gravigenesis Social</title>
 
-        h1{
-            margin-bottom:10px;
-        }
+<style>
 
-        p{
-            color:#999;
-        }
+body{
 
-        input{
-            width:100%;
-            padding:12px;
-            margin-top:10px;
-            border:none;
-            border-radius:10px;
-            background:#2a2a2a;
-            color:white;
-            font-size:16px;
-            box-sizing:border-box;
-        }
+    margin:0;
+    background:#0f0f0f;
+    color:white;
+    font-family:Arial;
 
-        button{
-            width:100%;
-            padding:12px;
-            margin-top:15px;
-            border:none;
-            border-radius:10px;
-            background:#4b7cff;
-            color:white;
-            font-size:16px;
-            cursor:pointer;
-            transition:0.2s;
-        }
+    display:flex;
 
-        button:hover{
-            opacity:0.8;
-        }
+    justify-content:center;
+    align-items:center;
 
-        #userPanel{
-            display:none;
-        }
+    height:100vh;
 
-    </style>
+}
+
+.card{
+
+    width:350px;
+
+    background:#1c1c1c;
+
+    padding:30px;
+
+    border-radius:20px;
+
+    box-shadow:0 0 40px rgba(0,0,0,0.5);
+
+    text-align:center;
+
+}
+
+h1{
+
+    margin-bottom:10px;
+
+}
+
+p{
+
+    color:#999;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:10px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#2a2a2a;
+
+    color:white;
+
+    font-size:16px;
+
+    box-sizing:border-box;
+
+}
+
+button{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:15px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#4b7cff;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    transition:0.2s;
+
+}
+
+button:hover{
+
+    opacity:0.8;
+
+}
+
+#userPanel{
+
+    display:none;
+
+}
+
+</style>
+
 </head>
 
 <body>
 
 <div class="card">
 
-    <h1>Gravigenesis Social</h1>
+<h1>Gravigenesis Social</h1>
 
-    <p>Future social platform</p>
+<p>Future social platform</p>
 
-    <div id="authPanel">
+<div id="authPanel">
 
-        <input
-            type="email"
-            id="email"
-            placeholder="Email"
-        >
+<input
+type="email"
+id="email"
+placeholder="Email"
+>
 
-        <input
-            type="password"
-            id="password"
-            placeholder="Password"
-        >
+<input
+type="password"
+id="password"
+placeholder="Password"
+>
 
-        <button onclick="register()">
-            Register
-        </button>
+<button onclick="register()">
+Register
+</button>
 
-        <button onclick="login()">
-            Login
-        </button>
-
-    </div>
-
-    <div id="userPanel">
-
-        <h2 id="userEmail"></h2>
-
-        <p>You are logged in.</p>
-
-        <button onclick="logout()">
-            Logout
-        </button>
-
-    </div>
+<button onclick="login()">
+Login
+</button>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<div id="userPanel">
 
-<script>
+<h2 id="userEmail"></h2>
 
-    // SUPABASE
+<p>You are logged in.</p>
 
-    const supabaseUrl =
-        'https://opqngkyrgazoggzscdqv.supabase.co';
+<button onclick="logout()">
+Logout
+</button>
 
-    const supabaseKey =
-        'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV';
+</div>
 
-    const supabase =
-        window.supabase.createClient(
-            supabaseUrl,
-            supabaseKey
-        );
+</div>
 
-    // REGISTER
+<script type="module">
 
-    async function register(){
+import { createClient }
 
-        const email =
-            document.getElementById('email').value;
+from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-        const password =
-            document.getElementById('password').value;
+const supabaseUrl =
+'https://opqngkyrgazoggzscdqv.supabase.co'
 
-        const { data, error } =
-            await supabase.auth.signUp({
+const supabaseKey =
+'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV'
 
-                email: email,
-                password: password
+const supabase =
+createClient(
+    supabaseUrl,
+    supabaseKey
+)
 
-            });
+window.register = async function(){
 
-        if(error){
+    const email =
+    document.getElementById('email').value
 
-            alert(error.message);
+    const password =
+    document.getElementById('password').value
 
-        }else{
+    const { data, error } =
+    await supabase.auth.signUp({
 
-            alert('Registration successful');
+        email: email,
+        password: password
 
-        }
+    })
 
-    }
+    if(error){
 
-    // LOGIN
+        alert(error.message)
 
-    async function login(){
+    }else{
 
-        const email =
-            document.getElementById('email').value;
-
-        const password =
-            document.getElementById('password').value;
-
-        const { data, error } =
-            await supabase.auth.signInWithPassword({
-
-                email: email,
-                password: password
-
-            });
-
-        if(error){
-
-            alert(error.message);
-
-        }else{
-
-            showUser(data.user);
-
-        }
+        alert('Registration successful')
 
     }
 
-    // LOGOUT
+}
 
-    async function logout(){
+window.login = async function(){
 
-        await supabase.auth.signOut();
+    const email =
+    document.getElementById('email').value
 
-        document.getElementById('authPanel').style.display =
-            'block';
+    const password =
+    document.getElementById('password').value
 
-        document.getElementById('userPanel').style.display =
-            'none';
+    const { data, error } =
+    await supabase.auth.signInWithPassword({
 
-    }
+        email: email,
+        password: password
 
-    // SHOW USER
+    })
 
-    function showUser(user){
+    if(error){
 
-        document.getElementById('authPanel').style.display =
-            'none';
+        alert(error.message)
 
-        document.getElementById('userPanel').style.display =
-            'block';
+    }else{
 
-        document.getElementById('userEmail').innerText =
-            user.email;
-
-    }
-
-    // CHECK SESSION
-
-    async function checkUser(){
-
-        const {
-            data: { session }
-        } = await supabase.auth.getSession();
-
-        if(session){
-
-            showUser(session.user);
-
-        }
+        showUser(data.user)
 
     }
 
-    checkUser();
+}
+
+window.logout = async function(){
+
+    await supabase.auth.signOut()
+
+    document.getElementById('authPanel').style.display =
+    'block'
+
+    document.getElementById('userPanel').style.display =
+    'none'
+
+}
+
+function showUser(user){
+
+    document.getElementById('authPanel').style.display =
+    'none'
+
+    document.getElementById('userPanel').style.display =
+    'block'
+
+    document.getElementById('userEmail').innerText =
+    user.email
+
+}
+
+async function checkUser(){
+
+    const {
+        data: { session }
+    } = await supabase.auth.getSession()
+
+    if(session){
+
+        showUser(session.user)
+
+    }
+
+}
+
+checkUser()
 
 </script>
 
 </body>
 </html>
-```
