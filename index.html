@@ -19,44 +19,29 @@ body{
     color:white;
     font-family:Arial;
 
-    display:flex;
+}
 
-    justify-content:center;
-    align-items:center;
+.container{
 
-    height:100vh;
+    width:500px;
+    margin:auto;
+    padding-top:50px;
 
 }
 
 .card{
 
-    width:350px;
-
     background:#1c1c1c;
 
-    padding:30px;
+    padding:20px;
 
     border-radius:20px;
 
-    box-shadow:0 0 40px rgba(0,0,0,0.5);
-
-    text-align:center;
+    margin-bottom:20px;
 
 }
 
-h1{
-
-    margin-bottom:10px;
-
-}
-
-p{
-
-    color:#999;
-
-}
-
-input{
+input, textarea{
 
     width:100%;
 
@@ -75,6 +60,12 @@ input{
     font-size:16px;
 
     box-sizing:border-box;
+
+}
+
+textarea{
+
+    min-height:100px;
 
 }
 
@@ -98,17 +89,21 @@ button{
 
     cursor:pointer;
 
-    transition:0.2s;
+}
+
+.post{
+
+    background:#222;
+
+    padding:15px;
+
+    border-radius:15px;
+
+    margin-top:15px;
 
 }
 
-button:hover{
-
-    opacity:0.8;
-
-}
-
-#userPanel{
+#app{
 
     display:none;
 
@@ -120,13 +115,11 @@ button:hover{
 
 <body>
 
-<div class="card">
+<div class="container">
+
+<div class="card" id="auth">
 
 <h1>Gravigenesis Social</h1>
-
-<p>Future social platform</p>
-
-<div id="authPanel">
 
 <input
 type="email"
@@ -150,15 +143,41 @@ Login
 
 </div>
 
-<div id="userPanel">
+<div id="app">
+
+<div class="card">
 
 <h2 id="userEmail"></h2>
-
-<p>You are logged in.</p>
 
 <button onclick="logout()">
 Logout
 </button>
+
+</div>
+
+<div class="card">
+
+<h2>Create Post</h2>
+
+<textarea
+id="postInput"
+placeholder="Write something..."
+></textarea>
+
+<button onclick="createPost()">
+Publish
+</button>
+
+</div>
+
+<div
+class="card"
+id="posts"
+>
+
+<h2>Posts</h2>
+
+</div>
 
 </div>
 
@@ -174,7 +193,7 @@ const supabaseUrl =
 'https://opqngkyrgazoggzscdqv.supabase.co'
 
 const supabaseKey =
-'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV'
+'ТВОЙ_ANON_KEY'
 
 const supabase =
 createClient(
@@ -190,11 +209,11 @@ window.register = async function(){
     const password =
     document.getElementById('password').value
 
-    const { data, error } =
+    const { error } =
     await supabase.auth.signUp({
 
-        email: email,
-        password: password
+        email,
+        password
 
     })
 
@@ -204,7 +223,7 @@ window.register = async function(){
 
     }else{
 
-        alert('Registration successful')
+        alert('Account created')
 
     }
 
@@ -221,8 +240,8 @@ window.login = async function(){
     const { data, error } =
     await supabase.auth.signInWithPassword({
 
-        email: email,
-        password: password
+        email,
+        password
 
     })
 
@@ -232,7 +251,7 @@ window.login = async function(){
 
     }else{
 
-        showUser(data.user)
+        showApp(data.user)
 
     }
 
@@ -242,24 +261,45 @@ window.logout = async function(){
 
     await supabase.auth.signOut()
 
-    document.getElementById('authPanel').style.display =
+    document.getElementById('auth').style.display =
     'block'
 
-    document.getElementById('userPanel').style.display =
+    document.getElementById('app').style.display =
     'none'
 
 }
 
-function showUser(user){
+function showApp(user){
 
-    document.getElementById('authPanel').style.display =
+    document.getElementById('auth').style.display =
     'none'
 
-    document.getElementById('userPanel').style.display =
+    document.getElementById('app').style.display =
     'block'
 
     document.getElementById('userEmail').innerText =
     user.email
+
+}
+
+window.createPost = function(){
+
+    const text =
+    document.getElementById('postInput').value
+
+    if(text.trim() === '') return
+
+    const div =
+    document.createElement('div')
+
+    div.className = 'post'
+
+    div.innerText = text
+
+    document.getElementById('posts')
+    .appendChild(div)
+
+    document.getElementById('postInput').value = ''
 
 }
 
@@ -271,7 +311,7 @@ async function checkUser(){
 
     if(session){
 
-        showUser(session.user)
+        showApp(session.user)
 
     }
 
