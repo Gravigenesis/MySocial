@@ -4,9 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Gravigenesis Social</title>
 
@@ -117,11 +115,11 @@ id="password"
 placeholder="Password"
 >
 
-<button onclick="register()">
+<button onclick="registerUser()">
 Register
 </button>
 
-<button onclick="login()">
+<button onclick="loginUser()">
 Login
 </button>
 
@@ -133,7 +131,7 @@ Login
 
 <h2 id="userEmail"></h2>
 
-<button onclick="logout()">
+<button onclick="logoutUser()">
 Logout
 </button>
 
@@ -166,25 +164,11 @@ Publish
 
 </div>
 
-<script type="module">
+<script>
 
-import { createClient }
+// REGISTER
 
-from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-const supabaseUrl =
-'https://opqngkyrgazoggzscdqv.supabase.co'
-
-const supabaseKey =
-'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV'
-
-const supabase =
-createClient(
-    supabaseUrl,
-    supabaseKey
-)
-
-window.register = async function(){
+function registerUser(){
 
     const email =
     document.getElementById('email').value
@@ -192,27 +176,30 @@ window.register = async function(){
     const password =
     document.getElementById('password').value
 
-    const { error } =
-    await supabase.auth.signUp({
+    if(email === '' || password === ''){
 
-        email,
-        password
+        alert('Fill all fields')
 
-    })
-
-    if(error){
-
-        alert(error.message)
-
-    }else{
-
-        alert('Registration successful')
-
+        return
     }
+
+    localStorage.setItem(
+        'email',
+        email
+    )
+
+    localStorage.setItem(
+        'password',
+        password
+    )
+
+    alert('Registration successful')
 
 }
 
-window.login = async function(){
+// LOGIN
+
+function loginUser(){
 
     const email =
     document.getElementById('email').value
@@ -220,39 +207,30 @@ window.login = async function(){
     const password =
     document.getElementById('password').value
 
-    const { data, error } =
-    await supabase.auth.signInWithPassword({
+    const savedEmail =
+    localStorage.getItem('email')
 
-        email,
-        password
+    const savedPassword =
+    localStorage.getItem('password')
 
-    })
+    if(
+        email === savedEmail &&
+        password === savedPassword
+    ){
 
-    if(error){
-
-        alert(error.message)
+        showApp(email)
 
     }else{
 
-        showApp(data.user)
+        alert('Wrong email or password')
 
     }
 
 }
 
-window.logout = async function(){
+// SHOW APP
 
-    await supabase.auth.signOut()
-
-    document.getElementById('auth').style.display =
-    'block'
-
-    document.getElementById('app').style.display =
-    'none'
-
-}
-
-function showApp(user){
+function showApp(email){
 
     document.getElementById('auth').style.display =
     'none'
@@ -261,11 +239,25 @@ function showApp(user){
     'block'
 
     document.getElementById('userEmail').innerText =
-    user.email
+    email
 
 }
 
-window.createPost = function(){
+// LOGOUT
+
+function logoutUser(){
+
+    document.getElementById('auth').style.display =
+    'block'
+
+    document.getElementById('app').style.display =
+    'none'
+
+}
+
+// POSTS
+
+function createPost(){
 
     const text =
     document.getElementById('postInput').value
@@ -285,22 +277,6 @@ window.createPost = function(){
     document.getElementById('postInput').value = ''
 
 }
-
-async function checkUser(){
-
-    const {
-        data: { session }
-    } = await supabase.auth.getSession()
-
-    if(session){
-
-        showApp(session.user)
-
-    }
-
-}
-
-checkUser()
 
 </script>
 
