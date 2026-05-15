@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Mini Instagram</title>
+<title>Mini Instagram FIX</title>
 
 <style>
 
@@ -63,11 +62,6 @@ button{
     margin-top:10px;
 }
 
-.small{
-    font-size:12px;
-    color:#aaa;
-}
-
 #app{display:none;}
 
 </style>
@@ -77,7 +71,6 @@ button{
 
 <div class="container">
 
-<!-- AUTH -->
 <div class="card" id="auth">
 
 <h2>Mini Instagram</h2>
@@ -90,7 +83,6 @@ button{
 
 </div>
 
-<!-- APP -->
 <div id="app">
 
 <div class="card">
@@ -98,11 +90,9 @@ button{
 <h3 id="userEmail"></h3>
 
 <input type="file" id="image">
-
 <textarea id="text" placeholder="Write post..."></textarea>
 
 <button onclick="createPost()">Post</button>
-
 <button onclick="logout()">Logout</button>
 
 </div>
@@ -115,29 +105,21 @@ button{
 
 <script type="module">
 
-import { createClient }
-from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 const supabase = createClient(
-
 'https://opqngkyrgazoggzscdqv.supabase.co',
-
 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcW5na3lyZ2F6b2dnenNjZHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTE2NjUsImV4cCI6MjA5NDQyNzY2NX0.ujjzvuhq1MxpDDLo8g5skjfa_vNunGU5d4EY402x7Fc'
-
 )
 
 let currentUser = null
 
 // REGISTER
 window.register = async () => {
+const email = emailInput().email
+const password = emailInput().password
 
-const email = document.getElementById("email").value
-const password = document.getElementById("password").value
-
-const { error } = await supabase.auth.signUp({
-email,
-password
-})
+const { error } = await supabase.auth.signUp({ email, password })
 
 if(error) return alert(error.message)
 
@@ -146,9 +128,8 @@ alert("Registered")
 
 // LOGIN
 window.login = async () => {
-
-const email = document.getElementById("email").value
-const password = document.getElementById("password").value
+const email = emailInput().email
+const password = emailInput().password
 
 const { data, error } =
 await supabase.auth.signInWithPassword({ email, password })
@@ -166,41 +147,66 @@ await supabase.auth.signOut()
 location.reload()
 }
 
-// CREATE POST + IMAGE
+// CREATE POST (FIXED)
 window.createPost = async () => {
+
+try{
 
 const file = document.getElementById("image").files[0]
 const text = document.getElementById("text").value
 
 if(!file) return alert("Select image")
 
-const fileName = Date.now() + file.name
+const fileName = Date.now() + "_" + file.name
 
-await supabase.storage
+// UPLOAD IMAGE
+const { error: uploadError } = await supabase.storage
 .from("images")
 .upload(fileName, file)
 
-const { data } = supabase.storage
+if(uploadError){
+alert("Upload error: " + uploadError.message)
+return
+}
+
+// GET PUBLIC URL
+const { data: urlData } = supabase.storage
 .from("images")
 .getPublicUrl(fileName)
 
-await supabase.from("posts").insert({
+// INSERT POST
+const { error } = await supabase.from("posts").insert({
 user_email: currentUser,
 content: text,
-image_url: data.publicUrl
+image_url: urlData.publicUrl
 })
+
+if(error){
+alert("DB error: " + error.message)
+return
+}
 
 document.getElementById("text").value = ""
 loadPosts()
+
+}catch(e){
+alert("Fatal error: " + e.message)
 }
 
-// LOAD POSTS
+}
+
+// LOAD POSTS (FIXED)
 async function loadPosts(){
 
-const { data } = await supabase
+const { data, error } = await supabase
 .from("posts")
 .select("*")
 .order("created_at",{ascending:false})
+
+if(error){
+alert("Load error: " + error.message)
+return
+}
 
 document.getElementById("posts").innerHTML = ""
 
@@ -210,41 +216,15 @@ const div = document.createElement("div")
 div.className = "post"
 
 div.innerHTML = `
-<b>${post.user_email}</b>
-<p>${post.content}</p>
-<img src="${post.image_url}">
-
-<button onclick="likePost('${post.id}')">❤️ Like</button>
-<button onclick="commentPost('${post.id}')">💬 Comment</button>
+<b>${post.user_email || ""}</b>
+<p>${post.content || ""}</p>
+<img src="${post.image_url || ""}">
 `
 
 document.getElementById("posts").appendChild(div)
+
 })
 
-}
-
-// LIKE
-window.likePost = async (id) => {
-await supabase.from("likes").insert({
-post_id: id,
-user_email: currentUser
-})
-alert("Liked")
-}
-
-// COMMENT
-window.commentPost = async (id) => {
-
-const text = prompt("Write comment:")
-if(!text) return
-
-await supabase.from("comments").insert({
-post_id: id,
-user_email: currentUser,
-content: text
-})
-
-alert("Comment added")
 }
 
 // SHOW APP
@@ -254,9 +234,16 @@ document.getElementById("app").style.display="block"
 document.getElementById("userEmail").innerText=currentUser
 }
 
+// INPUT FIX
+function emailInput(){
+return {
+email: document.getElementById("email").value,
+password: document.getElementById("password").value
+}
+}
+
 // CHECK USER
 async function checkUser(){
-
 const { data } = await supabase.auth.getUser()
 
 if(data.user){
