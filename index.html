@@ -2,17 +2,14 @@
 <html lang="ru">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Gravigenesis Social</title>
+<title>Mini Instagram</title>
 
 <style>
-
 body{
     margin:0;
-    background:#111;
+    background:#0f0f0f;
     color:white;
     font-family:Arial;
 }
@@ -20,141 +17,80 @@ body{
 .container{
     width:500px;
     margin:auto;
-    padding-top:50px;
+    padding-top:30px;
 }
 
 .card{
     background:#1c1c1c;
-    padding:20px;
-    border-radius:20px;
-    margin-bottom:20px;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
 }
 
 input, textarea{
-
     width:100%;
-    padding:12px;
-    margin-top:10px;
-
+    padding:10px;
+    margin-top:8px;
     border:none;
-
-    border-radius:10px;
-
+    border-radius:8px;
     background:#2a2a2a;
-
     color:white;
-
-    font-size:16px;
-
     box-sizing:border-box;
 }
 
-textarea{
-
-    min-height:120px;
-
-}
-
 button{
-
     width:100%;
-
-    padding:12px;
-
     margin-top:10px;
-
+    padding:10px;
     border:none;
-
-    border-radius:10px;
-
+    border-radius:8px;
     background:#4b7cff;
-
     color:white;
-
-    font-size:16px;
-
     cursor:pointer;
 }
 
 .post{
-
+    padding:10px;
     background:#222;
-
-    padding:15px;
-
-    border-radius:15px;
-
+    border-radius:10px;
     margin-top:10px;
 }
 
-#app{
-    display:none;
-}
-
+#app{display:none;}
+.small{font-size:12px;color:#aaa;}
 </style>
-
 </head>
 
 <body>
 
 <div class="container">
 
+<!-- AUTH -->
 <div class="card" id="auth">
 
-<h1>Gravigenesis Social</h1>
+<h2>Mini Instagram</h2>
 
-<input
-type="email"
-id="email"
-placeholder="Email"
->
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
 
-<input
-type="password"
-id="password"
-placeholder="Password"
->
-
-<button onclick="registerUser()">
-Register
-</button>
-
-<button onclick="loginUser()">
-Login
-</button>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
 
 </div>
 
+<!-- APP -->
 <div id="app">
 
 <div class="card">
 
-<h2 id="userEmail"></h2>
+<h3 id="userEmail"></h3>
 
-<button onclick="logoutUser()">
-Logout
-</button>
+<textarea id="postText" placeholder="Write something..."></textarea>
+<button onclick="createPost()">Post</button>
 
-</div>
-
-<div class="card">
-
-<h2>Create Post</h2>
-
-<textarea
-id="postInput"
-placeholder="Write something..."
-></textarea>
-
-<button onclick="createPost()">
-Publish
-</button>
+<button onclick="logout()">Logout</button>
 
 </div>
-
-<div class="card">
-
-<h2>Posts</h2>
 
 <div id="posts"></div>
 
@@ -162,121 +98,147 @@ Publish
 
 </div>
 
-</div>
+<script type="module">
 
-<script>
+import { createClient }
+from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const supabase = createClient(
+
+'https://opqngkyrgazoggzscdqv.supabase.co',
+
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wcW5na3lyZ2F6b2dnenNjZHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4NTE2NjUsImV4cCI6MjA5NDQyNzY2NX0.ujjzvuhq1MxpDDLo8g5skjfa_vNunGU5d4EY402x7Fc'
+
+)
+
+let currentUser = null
 
 // REGISTER
+window.register = async () => {
 
-function registerUser(){
+const email = document.getElementById("email").value
+const password = document.getElementById("password").value
 
-    const email =
-    document.getElementById('email').value
+const { error } = await supabase.auth.signUp({
+email,
+password
+})
 
-    const password =
-    document.getElementById('password').value
+if(error) return alert(error.message)
 
-    if(email === '' || password === ''){
-
-        alert('Fill all fields')
-
-        return
-    }
-
-    localStorage.setItem(
-        'email',
-        email
-    )
-
-    localStorage.setItem(
-        'password',
-        password
-    )
-
-    alert('Registration successful')
-
+alert("Registered! Now login")
 }
 
 // LOGIN
+window.login = async () => {
 
-function loginUser(){
+const email = document.getElementById("email").value
+const password = document.getElementById("password").value
 
-    const email =
-    document.getElementById('email').value
+const { data, error } =
+await supabase.auth.signInWithPassword({ email, password })
 
-    const password =
-    document.getElementById('password').value
+if(error) return alert(error.message)
 
-    const savedEmail =
-    localStorage.getItem('email')
-
-    const savedPassword =
-    localStorage.getItem('password')
-
-    if(
-        email === savedEmail &&
-        password === savedPassword
-    ){
-
-        showApp(email)
-
-    }else{
-
-        alert('Wrong email or password')
-
-    }
-
-}
-
-// SHOW APP
-
-function showApp(email){
-
-    document.getElementById('auth').style.display =
-    'none'
-
-    document.getElementById('app').style.display =
-    'block'
-
-    document.getElementById('userEmail').innerText =
-    email
-
+currentUser = data.user.email
+showApp()
+loadPosts()
 }
 
 // LOGOUT
+window.logout = async () => {
+await supabase.auth.signOut()
+location.reload()
+}
 
-function logoutUser(){
+// CREATE POST
+window.createPost = async () => {
 
-    document.getElementById('auth').style.display =
-    'block'
+const text = document.getElementById("postText").value
+if(!text) return
 
-    document.getElementById('app').style.display =
-    'none'
+await supabase.from("posts").insert({
+content: text,
+user_email: currentUser
+})
+
+document.getElementById("postText").value = ""
+loadPosts()
+}
+
+// LOAD POSTS
+async function loadPosts(){
+
+const { data } = await supabase
+.from("posts")
+.select("*")
+.order("created_at",{ascending:false})
+
+document.getElementById("posts").innerHTML = ""
+
+data.forEach(post => {
+
+const div = document.createElement("div")
+div.className = "post"
+
+div.innerHTML = `
+<b>${post.user_email}</b>
+<p>${post.content}</p>
+
+<button onclick="likePost('${post.id}')">❤️ Like</button>
+<button onclick="commentPost('${post.id}')">💬 Comment</button>
+`
+
+document.getElementById("posts").appendChild(div)
+})
 
 }
 
-// POSTS
+// LIKE
+window.likePost = async (id) => {
+await supabase.from("likes").insert({
+post_id: id,
+user_email: currentUser
+})
 
-function createPost(){
-
-    const text =
-    document.getElementById('postInput').value
-
-    if(text.trim() === '') return
-
-    const div =
-    document.createElement('div')
-
-    div.className = 'post'
-
-    div.innerText = text
-
-    document.getElementById('posts')
-    .prepend(div)
-
-    document.getElementById('postInput').value = ''
-
+alert("Liked!")
 }
+
+// COMMENT
+window.commentPost = async (id) => {
+
+const text = prompt("Write comment:")
+if(!text) return
+
+await supabase.from("comments").insert({
+post_id: id,
+user_email: currentUser,
+content: text
+})
+
+alert("Comment added!")
+}
+
+// SHOW APP
+function showApp(){
+document.getElementById("auth").style.display="none"
+document.getElementById("app").style.display="block"
+document.getElementById("userEmail").innerText=currentUser
+}
+
+// CHECK SESSION
+async function checkUser(){
+
+const { data } = await supabase.auth.getUser()
+
+if(data.user){
+currentUser = data.user.email
+showApp()
+loadPosts()
+}
+}
+
+checkUser()
 
 </script>
 
