@@ -1,46 +1,251 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
-    <title>My Social Network</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravigenesis Social</title>
 
     <style>
+
         body{
-            background:#111;
+            margin:0;
+            background:#0f0f0f;
             color:white;
             font-family:Arial;
-            text-align:center;
-            padding-top:100px;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
         }
 
         .card{
-            width:300px;
-            margin:auto;
-            background:#222;
-            padding:20px;
+            width:350px;
+            background:#1b1b1b;
+            padding:30px;
             border-radius:20px;
+            box-shadow:0 0 30px rgba(0,0,0,0.5);
+            text-align:center;
+        }
+
+        h1{
+            margin-bottom:10px;
+        }
+
+        p{
+            color:#999;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+            background:#2a2a2a;
+            color:white;
+            font-size:16px;
+            box-sizing:border-box;
         }
 
         button{
-            padding:10px 20px;
+            width:100%;
+            padding:12px;
+            margin-top:15px;
             border:none;
             border-radius:10px;
+            background:#4b7cff;
+            color:white;
+            font-size:16px;
             cursor:pointer;
+            transition:0.2s;
         }
+
+        button:hover{
+            opacity:0.8;
+        }
+
+        #userPanel{
+            display:none;
+        }
+
     </style>
 </head>
 
 <body>
 
-    <div class="card">
-        <h1>Gravigenesis Social</h1>
+<div class="card">
 
-        <p>The site is working.</p>
+    <h1>Gravigenesis Social</h1>
 
-        <button onclick="alert('Site working!')">
-            Press
+    <p>Future social platform</p>
+
+    <div id="authPanel">
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Email"
+        >
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Password"
+        >
+
+        <button onclick="register()">
+            Register
         </button>
+
+        <button onclick="login()">
+            Login
+        </button>
+
     </div>
+
+    <div id="userPanel">
+
+        <h2 id="userEmail"></h2>
+
+        <p>You are logged in.</p>
+
+        <button onclick="logout()">
+            Logout
+        </button>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+
+    // SUPABASE
+
+    const supabaseUrl =
+        'https://opqngkyrgazoggzscdqv.supabase.co';
+
+    const supabaseKey =
+        'sb_publishable_Wtexjq6MbpczgnJ5-k69iQ_uusWcuhV';
+
+    const supabase =
+        window.supabase.createClient(
+            supabaseUrl,
+            supabaseKey
+        );
+
+    // REGISTER
+
+    async function register(){
+
+        const email =
+            document.getElementById('email').value;
+
+        const password =
+            document.getElementById('password').value;
+
+        const { data, error } =
+            await supabase.auth.signUp({
+
+                email: email,
+                password: password
+
+            });
+
+        if(error){
+
+            alert(error.message);
+
+        }else{
+
+            alert('Registration successful');
+
+        }
+
+    }
+
+    // LOGIN
+
+    async function login(){
+
+        const email =
+            document.getElementById('email').value;
+
+        const password =
+            document.getElementById('password').value;
+
+        const { data, error } =
+            await supabase.auth.signInWithPassword({
+
+                email: email,
+                password: password
+
+            });
+
+        if(error){
+
+            alert(error.message);
+
+        }else{
+
+            showUser(data.user);
+
+        }
+
+    }
+
+    // LOGOUT
+
+    async function logout(){
+
+        await supabase.auth.signOut();
+
+        document.getElementById('authPanel').style.display =
+            'block';
+
+        document.getElementById('userPanel').style.display =
+            'none';
+
+    }
+
+    // SHOW USER
+
+    function showUser(user){
+
+        document.getElementById('authPanel').style.display =
+            'none';
+
+        document.getElementById('userPanel').style.display =
+            'block';
+
+        document.getElementById('userEmail').innerText =
+            user.email;
+
+    }
+
+    // CHECK SESSION
+
+    async function checkUser(){
+
+        const {
+            data: { session }
+        } = await supabase.auth.getSession();
+
+        if(session){
+
+            showUser(session.user);
+
+        }
+
+    }
+
+    checkUser();
+
+</script>
 
 </body>
 </html>
+```
